@@ -64,7 +64,7 @@
 
         // Sonidos
         const explosionSound = new Audio('explosion.wav');
-        const gataSound = new Audio('gata.wav');
+        const gataSound = new Audio('gata.wav'); // Asegúrate de que este archivo esté disponible en el directorio
 
         // Pantalla de inicio
         const startScreen = document.getElementById('startScreen');
@@ -124,6 +124,7 @@
             gataVecino = new GameObject(x, y, 'gata_vecino.png', false, 12); // Más rápida
             objects.push(gataVecino);
 
+            // Después de 5 segundos, la gata desaparece si no es tocada
             setTimeout(() => {
                 if (gataVecino) {
                     objects = objects.filter(obj => obj !== gataVecino);
@@ -153,11 +154,11 @@
             objects = objects.filter(obj => {
                 if (obj.isClicked(mouseX, mouseY)) {
                     if (obj === gataVecino) {
-                        gataSound.play(); // Reproduce el sonido correctamente
+                        gataSound.play(); // Reproduce el sonido
                         score += 1000;
                         document.querySelector('.score').textContent = `Puntuación: ${score}`;
                         objects = objects.filter(o => o !== gataVecino); // Elimina la gata del array de objetos
-                        gataVecino = null;
+                        gataVecino = null; // La gata deja de existir
                     } else if (obj.isGato) {
                         endGame();
                     } else {
@@ -165,7 +166,7 @@
                         score++;
                         document.querySelector('.score').textContent = `Puntuación: ${score}`;
                     }
-                    return false;
+                    return false; // Elimina el objeto si fue tocado
                 }
                 return true;
             });

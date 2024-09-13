@@ -93,10 +93,12 @@
             gataVecino = new GameObject(x, y, 'gata_vecino.png', false, 5); // Imagen de la gata y velocidad máxima
             objects.push(gataVecino);
 
-            // La "gata del vecino" desaparecerá después de 5 segundos
+            // La "gata del vecino" desaparecerá después de 5 segundos si no se toca
             setTimeout(() => {
-                objects = objects.filter(obj => obj !== gataVecino); // Elimina la gata del array de objetos
-                gataVecino = null; // Permite que aparezca nuevamente más adelante
+                if (gataVecino) {
+                    objects = objects.filter(obj => obj !== gataVecino); // Elimina la gata del array de objetos
+                    gataVecino = null; // Permite que aparezca nuevamente más adelante
+                }
             }, 5000);
         }
 

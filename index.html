@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Juego MOI</title>
     <style>
-        body { margin: 0; }
-        canvas { display: block; background: #87CEEB; } /* Fondo celeste */
+        body { margin: 0; overflow: hidden; background: #87CEEB; } /* Fondo celeste */
+        canvas { display: block; }
         .score {
             position: absolute;
             top: 10px;
@@ -15,9 +15,38 @@
             font-size: 24px;
             font-family: Arial, sans-serif;
         }
+        #startScreen, #endScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 48px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Comic Sans MS', sans-serif;
+            z-index: 10;
+        }
+        #endScreen {
+            font-size: 32px;
+            display: none;
+            flex-direction: column;
+            text-align: center;
+        }
+        .score, .messages {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
+    <div id="startScreen">MOI</div>
+    <div id="endScreen">
+        <div id="finalScore"></div>
+        <div id="message"></div>
+    </div>
     <div class="score">Puntuación: 0</div>
     <canvas id="gameCanvas"></canvas>
 
@@ -28,18 +57,23 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        // Puntuación y dificultad
         let score = 0;
         let difficulty = 1;
         let isGameOver = false;
+        let gataVecino = null;
 
         // Sonidos
-        const explosionSound = new Audio('explosion.wav'); // Asegúrate de tener este archivo en tu proyecto
-        const gataSound = new Audio('la gata.wav'); // Sonido que se reproducirá al tocar la gata del vecino
+        const explosionSound = new Audio('explosion.wav');
+        const gataSound = new Audio('gata.wav');
+
+        // Pantalla de inicio
+        const startScreen = document.getElementById('startScreen');
+        setTimeout(() => {
+            startScreen.style.display = 'none';
+        }, 3000);
 
         // Array para los objetos
         let objects = [];
-        let gataVecino = null;
 
         // Clase para los objetos del juego
         class GameObject {
@@ -48,11 +82,11 @@
                 this.y = y;
                 this.isGato = isGato;
                 this.image = new Image();
-                this.image.src = imageSrc; // Imagen del objeto
+                this.image.src = imageSrc;
                 this.width = 60;
                 this.height = 60;
-                this.speedX = (Math.random() * 2 * difficulty - difficulty) * speedMultiplier; // Movimiento horizontal
-                this.speedY = (Math.random() * 2 * difficulty - difficulty) * speedMultiplier; // Movimiento vertical
+                this.speedX = (Math.random() * 2 * difficulty - difficulty) * speedMultiplier;
+                this.speedY = (Math.random() * 2 * difficulty - difficulty) * speedMultiplier;
             }
 
             draw() {
@@ -60,7 +94,6 @@
                 this.x += this.speedX;
                 this.y += this.speedY;
 
-                // Mantener los objetos dentro del canvas
                 if (this.x < 0 || this.x + this.width > canvas.width) this.speedX *= -1;
                 if (this.y < 0 || this.y + this.height > canvas.height) this.speedY *= -1;
             }
@@ -70,92 +103,89 @@
             }
         }
 
-        // Función para generar objetos normales
         function spawnObject() {
             const x = Math.random() * (canvas.width - 60);
             const y = Math.random() * (canvas.height - 60);
-            const images = ['pez.png', 'bandera.png', 'raviol.png', 'pajaro.png']; // Rutas de imágenes
+            const images = ['pez.png', 'bandera.png', 'raviol.png', 'pajaro.png'];
             const randomImage = images[Math.floor(Math.random() * images.length)];
             const obj = new GameObject(x, y, randomImage);
             objects.push(obj);
 
-            // Cada 10 objetos, agregar el gato naranja
             if (score % 10 === 0 && score > 0) {
-                const gato = new GameObject(x, y, 'gato_naranja.png', true); // Imagen del gato naranja
+                const gato = new GameObject(x, y, 'gato_naranja.png', true);
                 objects.push(gato);
             }
         }
 
-        // Función para generar la "gata del vecino"
         function spawnGataVecino() {
-            if (gataVecino) return; // Solo una "gata del vecino" a la vez
+            if (gataVecino) return;
             const x = Math.random() * (canvas.width - 60);
             const y = Math.random() * (canvas.height - 60);
-            gataVecino = new GameObject(x, y, 'gata_vecino.png', false, 8); // Velocidad máxima con multiplicador de 8
+            gataVecino = new GameObject(x, y, 'gata_vecino.png', false, 12); // Más rápida
             objects.push(gataVecino);
 
-            // La "gata del vecino" desaparecerá después de 5 segundos si no se toca
             setTimeout(() => {
                 if (gataVecino) {
-                    objects = objects.filter(obj => obj !== gataVecino); // Elimina la gata del array de objetos
-                    gataVecino = null; // Permite que aparezca nuevamente más adelante
+                    objects = objects.filter(obj => obj !== gataVecino);
+                    gataVecino = null;
                 }
             }, 5000);
         }
 
-        // Función para incrementar dificultad con el tiempo
         function increaseDifficulty() {
-            difficulty += 0.2; // Aumenta la velocidad de los objetos
+            difficulty += 0.2;
         }
 
-        // Dibujar los objetos
         function gameLoop() {
             if (isGameOver) return;
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpiar el canvas
-            objects.forEach(obj => obj.draw()); // Dibuja los objetos
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            objects.forEach(obj => obj.draw());
 
-            requestAnimationFrame(gameLoop); // Sigue el bucle de dibujo
+            requestAnimationFrame(gameLoop);
         }
 
-        // Detectar clic en el canvas
         canvas.addEventListener('click', function(event) {
             const rect = canvas.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;
 
-            // Filtrar los objetos que fueron clicados
             objects = objects.filter(obj => {
                 if (obj.isClicked(mouseX, mouseY)) {
                     if (obj === gataVecino) {
-                        gataSound.play(); // Reproduce el sonido "la gata.wav"
-                        score += 1000; // La "gata del vecino" da 1000 puntos
+                        gataSound.play();
+                        score += 1000;
                         document.querySelector('.score').textContent = `Puntuación: ${score}`;
-                        gataVecino = null; // Elimina la gata
+                        gataVecino = null;
                     } else if (obj.isGato) {
-                        alert('¡Has tocado al MOI, sos ortiga! El juego ha terminado.');
-                        isGameOver = true; // Termina el juego si se toca el gato naranja
+                        endGame();
                     } else {
-                        explosionSound.play(); // Reproduce sonido de explosión
-                        score++; // Incrementa la puntuación
+                        explosionSound.play();
+                        score++;
                         document.querySelector('.score').textContent = `Puntuación: ${score}`;
                     }
-                    return false; // Elimina el objeto si fue tocado
+                    return false;
                 }
                 return true;
             });
         });
 
-        // Generar objetos cada segundo
+        function endGame() {
+            isGameOver = true;
+            document.getElementById('endScreen').style.display = 'flex';
+            document.getElementById('finalScore').textContent = `Puntuación final: ${score}`;
+            const messages = [
+                "¡Qué productivo que fuiste hoy!",
+                "¡La monogamia son los padres!",
+                "¡Barceloka siempre te espera!",
+                "¡No tiene mucha lógica estudiar programación ahora!"
+            ];
+            document.getElementById('message').textContent = messages[Math.floor(Math.random() * messages.length)];
+        }
+
         setInterval(spawnObject, 1000);
-
-        // Aumentar la dificultad cada 30 segundos
         setInterval(increaseDifficulty, 30000);
-
-        // Aparecer la "gata del vecino" cada 20 segundos
         setInterval(spawnGataVecino, 20000);
-
-        // Iniciar el bucle del juego
         gameLoop();
     </script>
 </body>

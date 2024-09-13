@@ -5,43 +5,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Juego MOI</title>
     <style>
-        /* Asegura que el canvas ocupe toda la pantalla */
         body { margin: 0; }
         canvas { display: block; background: #87CEEB; } /* Fondo celeste */
+        .score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 24px;
+            font-family: Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
+    <div class="score">Puntuación: 0</div>
     <canvas id="gameCanvas"></canvas>
 
     <script>
         // Configuración del canvas
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
-
-        // Ajustar el tamaño del canvas
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+
+        // Puntuación y dificultad
+        let score = 0;
+        let difficulty = 1;
+        let isGameOver = false;
+
+        // Sonido de explosión
+        const explosionSound = new Audio('explosion.wav'); // Asegúrate de tener este archivo en tu proyecto
 
         // Array para los objetos
         let objects = [];
 
         // Clase para los objetos del juego
         class GameObject {
-            constructor(x, y, imageSrc) {
+            constructor(x, y, imageSrc, isGato = false) {
                 this.x = x;
                 this.y = y;
+                this.isGato = isGato;
                 this.image = new Image();
                 this.image.src = imageSrc; // Imagen del objeto
-                this.width = 60; // Ancho del objeto
-                this.height = 60; // Alto del objeto
+                this.width = 60;
+                this.height = 60;
+                this.speedX = Math.random() * 2 * difficulty - difficulty; // Movimiento horizontal
+                this.speedY = Math.random() * 2 * difficulty - difficulty; // Movimiento vertical
             }
 
-            // Dibuja el objeto en la pantalla
             draw() {
                 ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                // Mantener los objetos dentro del canvas
+                if (this.x < 0 || this.x + this.width > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y + this.height > canvas.height) this.speedY *= -1;
             }
 
-            // Detecta si el objeto fue clicado
             isClicked(mouseX, mouseY) {
                 return mouseX > this.x && mouseX < this.x + this.width && mouseY > this.y && mouseY < this.y + this.height;
             }
@@ -55,12 +76,26 @@
             const randomImage = images[Math.floor(Math.random() * images.length)];
             const obj = new GameObject(x, y, randomImage);
             objects.push(obj);
+
+            // Cada 20 objetos, agregar el gato naranja
+            if (score % 20 === 0 && score > 0) {
+                const gato = new GameObject(x, y, 'gato_naranja.png', true); // Imagen del gato naranja
+                objects.push(gato);
+            }
+        }
+
+        // Función para incrementar dificultad con el tiempo
+        function increaseDifficulty() {
+            difficulty += 0.2; // Aumenta la velocidad de los objetos
         }
 
         // Dibujar los objetos
         function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpia el canvas
+            if (isGameOver) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpiar el canvas
             objects.forEach(obj => obj.draw()); // Dibuja los objetos
+
             requestAnimationFrame(gameLoop); // Sigue el bucle de dibujo
         }
 
@@ -71,11 +106,27 @@
             const mouseY = event.clientY - rect.top;
 
             // Filtrar los objetos que fueron clicados
-            objects = objects.filter(obj => !obj.isClicked(mouseX, mouseY));
+            objects = objects.filter(obj => {
+                if (obj.isClicked(mouseX, mouseY)) {
+                    if (obj.isGato) {
+                        alert('¡Has tocado el gato naranja! El juego ha terminado.');
+                        isGameOver = true; // Termina el juego si se toca el gato naranja
+                    } else {
+                        explosionSound.play(); // Reproduce sonido
+                        score++; // Incrementa la puntuación
+                        document.querySelector('.score').textContent = `Puntuación: ${score}`;
+                    }
+                    return false; // Elimina el objeto si fue tocado
+                }
+                return true;
+            });
         });
 
-        // Generar un objeto cada segundo
+        // Generar objetos cada segundo
         setInterval(spawnObject, 1000);
+
+        // Aumentar la dificultad cada 30 segundos
+        setInterval(increaseDifficulty, 30000);
 
         // Iniciar el bucle del juego
         gameLoop();

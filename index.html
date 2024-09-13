@@ -153,9 +153,10 @@
             objects = objects.filter(obj => {
                 if (obj.isClicked(mouseX, mouseY)) {
                     if (obj === gataVecino) {
-                        gataSound.play();
+                        gataSound.play(); // Reproduce el sonido correctamente
                         score += 1000;
                         document.querySelector('.score').textContent = `Puntuación: ${score}`;
+                        objects = objects.filter(o => o !== gataVecino); // Elimina la gata del array de objetos
                         gataVecino = null;
                     } else if (obj.isGato) {
                         endGame();

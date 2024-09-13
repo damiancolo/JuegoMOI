@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego MOI</title>
+    <style>
+        /* Aseguramos que el canvas ocupe toda la pantalla */
+        body { margin: 0; }
+        canvas { display: block; background: #87CEEB; } /* Color celeste (hexadecimal) */
+    </style>
+</head>
+<body>
+    <!-- Canvas para el juego -->
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        // Configuración del canvas
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Ajustar el tamaño del canvas a la ventana del navegador
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Array para los objetos del juego
+        let objects = [];
+
+        // Clase para los objetos del juego (pueden ser peces, pájaros, etc.)
+        class GameObject {
+            constructor(x, y, imageSrc) {
+                this.x = x;
+                this.y = y;
+                this.radius = 30; // Radio para detección de colisión
+                this.image = new Image();
+                this.image.src = imageSrc; // Carga de la imagen del objeto
+                this.width = 60; // Ancho de la imagen
+                this.height = 60; // Alto de la imagen
+            }
+
+            // Dibuja el objeto en la pantalla
+            draw() {
+                ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+            }
+
+            // Detecta si el objeto es tocado
+            isClicked(mouseX, mouseY) {
+                const dx = mouseX - (this.x + this.width / 2);
+                const dy = mouseY - (this.y + this.height / 2);
+                return Math.sqrt(dx * dx + dy * dy) < this.radius;
+            }
+        }
+
+        // Función para generar objetos
+        function spawnObject() {
+            const x = Math.random() * (canvas.width - 60);
+            const y = Math.random() * (canvas.height - 60);
+            const images = ['pez.png', 'bandera.png', 'raviol.png', 'pajaro.png']; // Tus imágenes
+            const randomImage = images[Math.floor(Math.random() * images.length)];
+            const obj = new GameObject(x, y, randomImage);
+            objects.push(obj);
+        }
+
+        // Dibuja todos los objetos y actualiza el canvas
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpiar el canvas
+            objects.forEach(obj => obj.draw()); // Dibuja cada objeto
+            requestAnimationFrame(gameLoop); // Llama al bucle en cada frame
+        }
+
+        // Maneja los clics del ratón para explotar objetos
+        canvas.addEventListener('click', function(event) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+
+            objects = objects.filter(obj => {
+                if (obj.isClicked(mouseX, mouseY)) {
+                    // Aquí podrías reproducir un sonido o animar la explosión
+                    return false; // Elimina el objeto si fue tocado
+                }
+                return true; // Mantén el objeto si no fue tocado
+            });
+        });
+
+        // Generar un objeto cada segundo
+        setInterval(spawnObject, 1000);
+
+        // Iniciar el bucle del juego
+        gameLoop();
+    </script>
+</body>
+</html>

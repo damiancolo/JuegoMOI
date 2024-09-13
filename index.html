@@ -15,6 +15,14 @@
             font-size: 24px;
             font-family: Arial, sans-serif;
         }
+        .hi-score {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-size: 24px;
+            font-family: Arial, sans-serif;
+        }
         #startScreen, #endScreen {
             position: absolute;
             top: 0;
@@ -36,6 +44,9 @@
             flex-direction: column;
             text-align: center;
         }
+        #topScores {
+            margin-top: 20px;
+        }
         .score, .messages {
             margin-top: 20px;
         }
@@ -45,9 +56,12 @@
     <div id="startScreen">MOI</div>
     <div id="endScreen">
         <div id="finalScore"></div>
+        <div id="hiScoreMessage"></div>
+        <div id="topScores"></div>
         <div id="message"></div>
     </div>
     <div class="score">Puntuación: 0</div>
+    <div class="hi-score">Hi-Score: 0</div>
     <canvas id="gameCanvas"></canvas>
 
     <script>
@@ -61,6 +75,20 @@
         let difficulty = 1;
         let isGameOver = false;
         let gataVecino = null;
+
+        // Obtener el Top 10 de localStorage o inicializarlo vacío
+        let topScores = JSON.parse(localStorage.getItem('topScores')) || [];
+
+        // Mostrar el Top 10 en pantalla
+        function displayTopScores() {
+            const topScoresElement = document.getElementById('topScores');
+            topScoresElement.innerHTML = `<h3>Top 10</h3>`;
+            topScores.forEach((entry, index) => {
+                topScoresElement.innerHTML += `<p>${index + 1}. ${entry.name}: ${entry.score}</p>`;
+            });
+        }
+
+        displayTopScores();
 
         // Sonidos
         const explosionSound = new Audio('explosion.wav');
@@ -177,6 +205,20 @@
             isGameOver = true;
             document.getElementById('endScreen').style.display = 'flex';
             document.getElementById('finalScore').textContent = `Puntuación final: ${score}`;
+
+            // Verificar si la puntuación entra en el Top 10
+            if (topScores.length < 10 || score > topScores[topScores.length - 1].score) {
+                let playerName = prompt("¡Nuevo Hi-Score! Ingresa tu nombre:");
+                topScores.push({ name: playerName, score: score });
+                topScores.sort((a, b) => b.score - a.score); // Ordenar el Top 10
+                if (topScores.length > 10) topScores.pop(); // Mantener solo los 10 mejores
+                localStorage.setItem('topScores', JSON.stringify(topScores)); // Guardar en localStorage
+                displayTopScores();
+                document.getElementById('hiScoreMessage').textContent = '¡Nuevo Hi-Score en el Top 10!';
+            } else {
+                document.getElementById('hiScoreMessage').textContent = '';
+            }
+
             const messages = [
                 "¡Qué productivo que fuiste hoy!",
                 "¡La monogamia son los padres!",

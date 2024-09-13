@@ -77,7 +77,7 @@
             const obj = new GameObject(x, y, randomImage);
             objects.push(obj);
 
-            // Cada 20 objetos, agregar el gato naranja
+            // Cada 10 objetos, agregar el gato naranja
             if (score % 20 === 0 && score > 0) {
                 const gato = new GameObject(x, y, 'gato_naranja.png', true); // Imagen del gato naranja
                 objects.push(gato);

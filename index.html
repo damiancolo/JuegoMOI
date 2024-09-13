@@ -33,8 +33,9 @@
         let difficulty = 1;
         let isGameOver = false;
 
-        // Sonido de explosión
+        // Sonidos
         const explosionSound = new Audio('explosion.wav'); // Asegúrate de tener este archivo en tu proyecto
+        const gataSound = new Audio('la gata.wav'); // Sonido que se reproducirá al tocar la gata del vecino
 
         // Array para los objetos
         let objects = [];
@@ -90,7 +91,7 @@
             if (gataVecino) return; // Solo una "gata del vecino" a la vez
             const x = Math.random() * (canvas.width - 60);
             const y = Math.random() * (canvas.height - 60);
-            gataVecino = new GameObject(x, y, 'gata_vecino.png', false, 5); // Imagen de la gata y velocidad máxima
+            gataVecino = new GameObject(x, y, 'gata_vecino.png', false, 8); // Velocidad máxima con multiplicador de 8
             objects.push(gataVecino);
 
             // La "gata del vecino" desaparecerá después de 5 segundos si no se toca
@@ -127,6 +128,7 @@
             objects = objects.filter(obj => {
                 if (obj.isClicked(mouseX, mouseY)) {
                     if (obj === gataVecino) {
+                        gataSound.play(); // Reproduce el sonido "la gata.wav"
                         score += 1000; // La "gata del vecino" da 1000 puntos
                         document.querySelector('.score').textContent = `Puntuación: ${score}`;
                         gataVecino = null; // Elimina la gata
@@ -134,7 +136,7 @@
                         alert('¡Has tocado al MOI, sos ortiga! El juego ha terminado.');
                         isGameOver = true; // Termina el juego si se toca el gato naranja
                     } else {
-                        explosionSound.play(); // Reproduce sonido
+                        explosionSound.play(); // Reproduce sonido de explosión
                         score++; // Incrementa la puntuación
                         document.querySelector('.score').textContent = `Puntuación: ${score}`;
                     }

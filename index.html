@@ -15,14 +15,6 @@
             font-size: 24px;
             font-family: Arial, sans-serif;
         }
-        .hi-score {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            color: white;
-            font-size: 24px;
-            font-family: Arial, sans-serif;
-        }
         #startScreen, #endScreen {
             position: absolute;
             top: 0;
@@ -37,17 +29,30 @@
             align-items: center;
             font-family: 'Comic Sans MS', sans-serif;
             z-index: 10;
+            flex-direction: column;
+            text-align: center;
         }
         #endScreen {
             font-size: 32px;
             display: none;
             flex-direction: column;
-            text-align: center;
         }
         #topScores {
             margin-top: 20px;
+            font-size: 24px;
         }
-        .score, .messages {
+        #message {
+            margin-top: 20px;
+            font-size: 24px;
+        }
+        #retryButton {
+            background-color: #28a745;
+            color: white;
+            font-size: 24px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
             margin-top: 20px;
         }
     </style>
@@ -56,12 +61,11 @@
     <div id="startScreen">MOI</div>
     <div id="endScreen">
         <div id="finalScore"></div>
-        <div id="hiScoreMessage"></div>
         <div id="topScores"></div>
         <div id="message"></div>
+        <button id="retryButton" onclick="retryGame()">Otra vez</button>
     </div>
     <div class="score">Puntuación: 0</div>
-    <div class="hi-score">Hi-Score: 0</div>
     <canvas id="gameCanvas"></canvas>
 
     <script>
@@ -77,8 +81,12 @@
         let gataVecino = null;
 
         // JSONBin API Key y Bin ID
-        const apiKey = "$2a$10$XEW9c5NoUm6HJ.42UMWMp.nN8SxB/KEwo5gA9YpHQIsZzpobQnS3C"; // Aquí usé la API key proporcionada
+        const apiKey = "$2a$10$XEW9c5NoUm6HJ.42UMWMp.nN8SxB/KEwo5gA9YpHQIsZzpobQnS3C"; // Tu X-MASTER-KEY de JSONBin
         const binId = "66e48617e41b4d34e42f92f3"; // Reemplázalo con tu BIN ID de JSONBin
+
+        // Sonidos
+        const explosionSound = new Audio('explosion.wav');
+        const gataSound = new Audio('gata.wav'); // Sonido que se reproducirá al finalizar
 
         // Función para obtener el Top 10 desde JSONBin
         async function getTopScores() {
@@ -123,12 +131,13 @@
             });
         }
 
+        // Función para reiniciar el juego
+        function retryGame() {
+            window.location.reload(); // Recargar la página para reiniciar el juego
+        }
+
         // Llamada para mostrar el Top 10 cuando inicia el juego
         displayTopScores();
-
-        // Sonidos
-        const explosionSound = new Audio('explosion.wav');
-        const gataSound = new Audio('gata.wav'); // Sonido que se reproducirá cuando aparezca la gata del vecino
 
         // Pantalla de inicio
         const startScreen = document.getElementById('startScreen');
@@ -188,7 +197,8 @@
             gataVecino = new GameObject(x, y, 'gata_vecino.png', false, 12); // Más rápida
             objects.push(gataVecino);
 
-            gataSound.play(); // Reproduce el sonido cuando aparece la gata
+            // Reproduce el sonido cuando aparece la gata
+            gataSound.play(); 
 
             // Después de 5 segundos, la gata desaparece si no es tocada
             setTimeout(() => {
@@ -242,6 +252,9 @@
             document.getElementById('endScreen').style.display = 'flex';
             document.getElementById('finalScore').textContent = `Puntuación final: ${score}`;
 
+            // Reproducir sonido de gata al terminar
+            gataSound.play();
+
             // Obtener el Top 10 desde JSONBin
             let topScores = await getTopScores();
 
@@ -254,12 +267,18 @@
 
                 // Actualizar el Top 10 en JSONBin
                 await updateTopScores(topScores);
-
-                document.getElementById('hiScoreMessage').textContent = '¡Nuevo Hi-Score en el Top 10!';
-            } else {
-                document.getElementById('hiScoreMessage').textContent = '';
             }
 
+            // Mostrar frases aleatorias
+            const messages = [
+                "¡Qué productivo que fuiste hoy!",
+                "¡La monogamia son los padres!",
+                "¡Barceloka siempre te espera!",
+                "¡No tiene mucha lógica estudiar programación ahora!"
+            ];
+            document.getElementById('message').textContent = messages[Math.floor(Math.random() * messages.length)];
+
+            // Mostrar el Top 10 actualizado
             displayTopScores();
         }
 

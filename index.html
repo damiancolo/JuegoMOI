@@ -38,10 +38,11 @@
 
         // Array para los objetos
         let objects = [];
+        let gataVecino = null;
 
         // Clase para los objetos del juego
         class GameObject {
-            constructor(x, y, imageSrc, isGato = false) {
+            constructor(x, y, imageSrc, isGato = false, speedMultiplier = 1) {
                 this.x = x;
                 this.y = y;
                 this.isGato = isGato;
@@ -49,8 +50,8 @@
                 this.image.src = imageSrc; // Imagen del objeto
                 this.width = 60;
                 this.height = 60;
-                this.speedX = Math.random() * 2 * difficulty - difficulty; // Movimiento horizontal
-                this.speedY = Math.random() * 2 * difficulty - difficulty; // Movimiento vertical
+                this.speedX = (Math.random() * 2 * difficulty - difficulty) * speedMultiplier; // Movimiento horizontal
+                this.speedY = (Math.random() * 2 * difficulty - difficulty) * speedMultiplier; // Movimiento vertical
             }
 
             draw() {
@@ -68,7 +69,7 @@
             }
         }
 
-        // Función para generar objetos
+        // Función para generar objetos normales
         function spawnObject() {
             const x = Math.random() * (canvas.width - 60);
             const y = Math.random() * (canvas.height - 60);
@@ -82,6 +83,21 @@
                 const gato = new GameObject(x, y, 'gato_naranja.png', true); // Imagen del gato naranja
                 objects.push(gato);
             }
+        }
+
+        // Función para generar la "gata del vecino"
+        function spawnGataVecino() {
+            if (gataVecino) return; // Solo una "gata del vecino" a la vez
+            const x = Math.random() * (canvas.width - 60);
+            const y = Math.random() * (canvas.height - 60);
+            gataVecino = new GameObject(x, y, 'gata_vecino.png', false, 5); // Imagen de la gata y velocidad máxima
+            objects.push(gataVecino);
+
+            // La "gata del vecino" desaparecerá después de 5 segundos
+            setTimeout(() => {
+                objects = objects.filter(obj => obj !== gataVecino); // Elimina la gata del array de objetos
+                gataVecino = null; // Permite que aparezca nuevamente más adelante
+            }, 5000);
         }
 
         // Función para incrementar dificultad con el tiempo
@@ -108,7 +124,11 @@
             // Filtrar los objetos que fueron clicados
             objects = objects.filter(obj => {
                 if (obj.isClicked(mouseX, mouseY)) {
-                    if (obj.isGato) {
+                    if (obj === gataVecino) {
+                        score += 1000; // La "gata del vecino" da 1000 puntos
+                        document.querySelector('.score').textContent = `Puntuación: ${score}`;
+                        gataVecino = null; // Elimina la gata
+                    } else if (obj.isGato) {
                         alert('¡Has tocado al MOI, sos ortiga! El juego ha terminado.');
                         isGameOver = true; // Termina el juego si se toca el gato naranja
                     } else {
@@ -127,6 +147,9 @@
 
         // Aumentar la dificultad cada 30 segundos
         setInterval(increaseDifficulty, 30000);
+
+        // Aparecer la "gata del vecino" cada 20 segundos
+        setInterval(spawnGataVecino, 20000);
 
         // Iniciar el bucle del juego
         gameLoop();
